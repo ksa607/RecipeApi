@@ -6,10 +6,14 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RecipeApi.Data;
+using RecipeApi.Data.Repositories;
+using RecipeApi.Models;
 
 namespace RecipeApi
 {
@@ -26,10 +30,15 @@ namespace RecipeApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddDbContext<RecipeContext>(options =>
+          options.UseSqlServer(Configuration.GetConnectionString("RecipeContext")));
+
+            services.AddScoped<RecipeDataInitializer>();
+            services.AddScoped<IRecipeRepository, RecipeRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, RecipeDataInitializer recipeDataInitializer)
         {
             if (env.IsDevelopment())
             {
@@ -46,6 +55,8 @@ namespace RecipeApi
             {
                 endpoints.MapControllers();
             });
+
+            recipeDataInitializer.InitializeData(); //.Wait();
         }
     }
 }
