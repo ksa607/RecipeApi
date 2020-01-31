@@ -18,7 +18,7 @@ namespace RecipeApi.Data.Repositories
 
         public IEnumerable<Recipe> GetAll()
         {
-            return _recipes.ToList();
+            return _recipes.Include(r => r.Ingredients).ToList();
         }
 
         public Recipe GetBy(int id)
