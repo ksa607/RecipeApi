@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RecipeApi.Models;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RecipeApi.Controllers
 {
@@ -12,6 +14,13 @@ namespace RecipeApi.Controllers
         public RecipesController(IRecipeRepository context)
         {
             _recipeRepository = context;
+        }
+
+        // GET: api/Recipes
+        [HttpGet]
+        public IEnumerable<Recipe> GetRecipes()
+        {
+            return _recipeRepository.GetAll().OrderBy(r => r.Name);
         }
     }
 }

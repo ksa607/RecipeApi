@@ -27,7 +27,7 @@ namespace RecipeApi.Data
             //Another way to seed the database
             builder.Entity<Recipe>().HasData(
                 new Recipe { Id = 1, Name = "Spaghetti", Created = DateTime.Now },
-                 new Recipe { Id = 2, Name = "Tomatensoep", Created = DateTime.Now }
+                 new Recipe { Id = 2, Name = "Tomato soup", Created = DateTime.Now }
   );
 
             builder.Entity<Ingredient>().HasData(
