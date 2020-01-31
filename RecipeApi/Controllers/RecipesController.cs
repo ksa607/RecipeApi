@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RecipeApi.DTOs;
 using RecipeApi.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,12 +51,15 @@ namespace RecipeApi.Controllers
         /// </summary>
         /// <param name="recipe">the new recipe</param>
         [HttpPost]
-        public ActionResult<Recipe> PostRecipe(Recipe recipe)
+        public ActionResult<Recipe> PostRecipe(RecipeDTO recipe)
         {
-            _recipeRepository.Add(recipe);
+            Recipe recipeToCreate = new Recipe() { Name = recipe.Name, Chef = recipe.Chef };
+            foreach (var i in recipe.Ingredients)
+                recipeToCreate.AddIngredient(new Ingredient(i.Name, i.Amount, i.Unit));
+            _recipeRepository.Add(recipeToCreate);
             _recipeRepository.SaveChanges();
 
-            return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, recipe);
+            return CreatedAtAction(nameof(GetRecipe), new { id = recipeToCreate.Id }, recipeToCreate);
         }
 
         // PUT: api/Recipes/5
