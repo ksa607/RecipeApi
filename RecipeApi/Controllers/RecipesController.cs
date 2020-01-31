@@ -24,11 +24,12 @@ namespace RecipeApi.Controllers
         /// Get all recipes ordered by name
         /// </summary>
         /// <returns>array of recipes</returns>
-
         [HttpGet]
-        public IEnumerable<Recipe> GetRecipes()
+        public IEnumerable<Recipe> GetRecipes(string name = null, string chef = null, string ingredientName = null)
         {
-            return _recipeRepository.GetAll().OrderBy(r => r.Name);
+            if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(chef) && string.IsNullOrEmpty(ingredientName))
+                return _recipeRepository.GetAll();
+            return _recipeRepository.GetBy(name, chef, ingredientName);
         }
 
         // GET: api/Recipes/5

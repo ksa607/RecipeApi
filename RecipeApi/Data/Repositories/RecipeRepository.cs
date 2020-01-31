@@ -51,5 +51,17 @@ namespace RecipeApi.Data.Repositories
         {
             _context.SaveChanges();
         }
-     }
+
+        public IEnumerable<Recipe> GetBy(string name = null, string chef = null, string ingredientName = null)
+        {
+            var recipes = _recipes.Include(r => r.Ingredients).AsQueryable();
+            if (!string.IsNullOrEmpty(name))
+                recipes = recipes.Where(r => r.Name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0);
+            if (!string.IsNullOrEmpty(chef))
+                recipes = recipes.Where(r => r.Chef.Equals(chef, System.StringComparison.OrdinalIgnoreCase));
+            if (!string.IsNullOrEmpty(ingredientName))
+                recipes = recipes.Where(r => r.Ingredients.Any(i => i.Name.Equals(ingredientName, System.StringComparison.OrdinalIgnoreCase)));
+            return recipes.OrderBy(r => r.Name).ToList();
+        }
+    }
 }
