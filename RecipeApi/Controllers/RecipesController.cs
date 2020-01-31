@@ -99,5 +99,40 @@ namespace RecipeApi.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Get an ingredient for a recipe
+        /// </summary>
+        /// <param name="id">id of the recipe</param>
+        /// <param name="ingredientId">id of the ingredient</param>
+        [HttpGet("{id}/ingredients/{ingredientId}")]
+        public ActionResult<Ingredient> GetIngredient(int id, int ingredientId)
+        {
+            if (!_recipeRepository.TryGetRecipe(id, out var recipe))
+            {
+                return NotFound();
+            }
+            Ingredient ingredient = recipe.GetIngredient(ingredientId);
+            if (ingredient == null)
+                return NotFound();
+            return ingredient;
+        }
+
+        /// <summary>
+        /// Adds an ingredient to a recipe
+        /// </summary>
+        /// <param name="id">the id of the recipe</param>
+        /// <param name="ingredient">the ingredient to be added</param>
+        [HttpPost("{id}/ingredients")]
+        public ActionResult<Ingredient> PostIngredient(int id, IngredientDTO ingredient)
+        {
+            if (!_recipeRepository.TryGetRecipe(id, out var recipe))
+            {
+                return NotFound();
+            }
+            var ingredientToCreate = new Ingredient(ingredient.Name, ingredient.Amount, ingredient.Unit);
+            recipe.AddIngredient(ingredientToCreate);
+            _recipeRepository.SaveChanges();
+            return CreatedAtAction("GetIngredient", new { id = recipe.Id, ingredientId = ingredientToCreate.Id }, ingredientToCreate);
+        }
     }
 }

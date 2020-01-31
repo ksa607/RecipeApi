@@ -36,6 +36,8 @@ namespace RecipeApi
                 c.Version = "v1";
                 c.Description = "The Recipe API documentation description.";
             }); //for OpenAPI 3.0 else AddSwaggerDocument();
+
+            services.AddCors(options => options.AddPolicy("AllowAllOrigins", builder => builder.AllowAnyOrigin()));
         }
     
 
