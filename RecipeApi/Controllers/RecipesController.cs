@@ -22,5 +22,14 @@ namespace RecipeApi.Controllers
         {
             return _recipeRepository.GetAll().OrderBy(r => r.Name);
         }
+        
+        // GET: api/Recipes/id
+        [HttpGet("{id}")]
+        public ActionResult<Recipe> GetRecipe(int id)
+        {
+            Recipe recipe = _recipeRepository.GetBy(id);
+            if (recipe == null) return NotFound();
+            return recipe;
+        }
     }
 }
