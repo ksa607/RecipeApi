@@ -56,11 +56,11 @@ namespace RecipeApi.Data.Repositories
         {
             var recipes = _recipes.Include(r => r.Ingredients).AsQueryable();
             if (!string.IsNullOrEmpty(name))
-                recipes = recipes.Where(r => r.Name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0);
+                recipes = recipes.Where(r => r.Name.IndexOf(name) >= 0);
             if (!string.IsNullOrEmpty(chef))
-                recipes = recipes.Where(r => r.Chef.Equals(chef, System.StringComparison.OrdinalIgnoreCase));
+                recipes = recipes.Where(r => r.Chef==chef);
             if (!string.IsNullOrEmpty(ingredientName))
-                recipes = recipes.Where(r => r.Ingredients.Any(i => i.Name.Equals(ingredientName, System.StringComparison.OrdinalIgnoreCase)));
+                recipes = recipes.Where(r => r.Ingredients.Any(i => i.Name==ingredientName));
             return recipes.OrderBy(r => r.Name).ToList();
         }
     }
