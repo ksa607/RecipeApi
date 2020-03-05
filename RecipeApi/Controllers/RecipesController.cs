@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RecipeApi.DTOs;
 using RecipeApi.Models;
 using System.Collections.Generic;
@@ -9,14 +11,17 @@ namespace RecipeApi.Controllers
     [ApiConventionType(typeof(DefaultApiConventions))]
     [Produces("application/json")]
     [Route("api/[controller]")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     public class RecipesController : ControllerBase
     {
         private readonly IRecipeRepository _recipeRepository;
+        private readonly ICustomerRepository _customerRepository;
 
-        public RecipesController(IRecipeRepository context)
+        public RecipesController(IRecipeRepository context, ICustomerRepository customerRepository)
         {
             _recipeRepository = context;
+            _customerRepository = customerRepository;
         }
 
         // GET: api/Recipes
@@ -25,6 +30,7 @@ namespace RecipeApi.Controllers
         /// </summary>
         /// <returns>array of recipes</returns>
         [HttpGet]
+        [AllowAnonymous]
         public IEnumerable<Recipe> GetRecipes(string name = null, string chef = null, string ingredientName = null)
         {
             if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(chef) && string.IsNullOrEmpty(ingredientName))
@@ -44,6 +50,16 @@ namespace RecipeApi.Controllers
             Recipe recipe = _recipeRepository.GetBy(id);
             if (recipe == null) return NotFound();
             return recipe;
+        }
+
+        /// <summary>
+        /// Get favorite recipes of current user
+        /// </summary>
+        [HttpGet("Favorites")]
+        public IEnumerable<Recipe> GetFavorites()
+        {
+            Customer customer = _customerRepository.GetBy(User.Identity.Name);
+            return customer.FavoriteRecipes;
         }
 
         // POST: api/Recipes

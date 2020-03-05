@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -5,10 +6,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+using NSwag;
+using NSwag.Generation.Processors.Security;
 using RecipeApi.Data;
 using RecipeApi.Data.Repositories;
 using RecipeApi.Models;
 using System;
+using System.Linq;
+using System.Text;
 
 namespace RecipeApi
 {
@@ -55,6 +61,26 @@ namespace RecipeApi
                 options.User.RequireUniqueEmail = true;
             });
 
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+                {
+                 x.RequireHttpsMetadata = false;
+                 x.SaveToken = true;
+                 x.TokenValidationParameters = new TokenValidationParameters
+                 {
+                     ValidateIssuerSigningKey = true,
+                     IssuerSigningKey = new SymmetricSecurityKey(
+                       Encoding.UTF8.GetBytes(Configuration["Tokens:Key"])),
+                     ValidateIssuer = false,
+                     ValidateAudience = false,
+                     RequireExpirationTime = true //Ensure token hasn't expired
+                    };
+            });
+
             // Register the Swagger services
             services.AddOpenApiDocument(c =>
             {
@@ -62,7 +88,18 @@ namespace RecipeApi
                 c.Title = "Recipe API";
                 c.Version = "v1";
                 c.Description = "The Recipe API documentation description.";
-            }); //for OpenAPI 3.0 else AddSwaggerDocument();
+                c.AddSecurity("JWT", Enumerable.Empty<string>(), new OpenApiSecurityScheme
+                {
+                    Type = OpenApiSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    In = OpenApiSecurityApiKeyLocation.Header,
+                    Description = "Type into the textbox: Bearer {your JWT token}."
+                });
+
+                c.OperationProcessors.Add(
+                    new AspNetCoreOperationSecurityScopeProcessor("JWT")); //adds the token when a request is send
+            });
+
 
             services.AddCors(options => options.AddPolicy("AllowAllOrigins", builder => builder.AllowAnyOrigin()));
         }
@@ -83,6 +120,8 @@ namespace RecipeApi
             app.UseSwaggerUi3();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
