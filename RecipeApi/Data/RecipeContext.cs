@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RecipeApi.Models;
 using System;
 
 namespace RecipeApi.Data
 {
-    public class RecipeContext : DbContext
+    public class RecipeContext : IdentityDbContext
     {
         public RecipeContext(DbContextOptions<RecipeContext> options)
             : base(options)
@@ -24,6 +25,15 @@ namespace RecipeApi.Data
             builder.Entity<Ingredient>().Property(r => r.Name).IsRequired().HasMaxLength(50);
             builder.Entity<Ingredient>().Property(r => r.Unit).HasMaxLength(10);
 
+            builder.Entity<Customer>().Property(c => c.LastName).IsRequired().HasMaxLength(50);
+            builder.Entity<Customer>().Property(c => c.FirstName).IsRequired().HasMaxLength(50);
+            builder.Entity<Customer>().Property(c => c.Email).IsRequired().HasMaxLength(100);
+            builder.Entity<Customer>().Ignore(c => c.FavoriteRecipes);
+
+            builder.Entity<CustomerFavorite>().HasKey(f => new { f.CustomerId, f.RecipeId });
+            builder.Entity<CustomerFavorite>().HasOne(f => f.Customer).WithMany(u => u.Favorites).HasForeignKey(f => f.CustomerId);
+            builder.Entity<CustomerFavorite>().HasOne(f => f.Recipe).WithMany().HasForeignKey(f => f.RecipeId);
+
             //Another way to seed the database
             builder.Entity<Recipe>().HasData(
                  new Recipe { Id = 1, Name = "Spaghetti", Created = DateTime.Now, Chef = "Piet" },
@@ -39,5 +49,6 @@ namespace RecipeApi.Data
         }
 
         public DbSet<Recipe> Recipes { get; set; }
+        public DbSet<Customer> Customers { get; set; }
     }
 }
