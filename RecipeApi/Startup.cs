@@ -26,7 +26,7 @@ namespace RecipeApi
             services.AddDbContext<RecipeContext>(options =>
           options.UseSqlServer(Configuration.GetConnectionString("RecipeContext")));
 
-            services.AddScoped<RecipeDataInitializer>();
+            services.AddHostedService<RecipeDataInitializer>();
             services.AddScoped<IRecipeRepository, RecipeRepository>();
             // Register the Swagger services
             services.AddOpenApiDocument(c =>
@@ -42,7 +42,7 @@ namespace RecipeApi
     
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, RecipeDataInitializer recipeDataInitializer)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -63,8 +63,6 @@ namespace RecipeApi
             {
                 endpoints.MapControllers();
             });
-
-            recipeDataInitializer.InitializeData(); //.Wait();
         }
     }
 }

@@ -3,6 +3,7 @@ using RecipeApi.DTOs;
 using RecipeApi.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace RecipeApi.Controllers
 {
@@ -25,11 +26,11 @@ namespace RecipeApi.Controllers
         /// </summary>
         /// <returns>array of recipes</returns>
         [HttpGet]
-        public IEnumerable<Recipe> GetRecipes(string name = null, string chef = null, string ingredientName = null)
+        public Task<IEnumerable<Recipe>> GetRecipes(string name = null, string chef = null, string ingredientName = null)
         {
             if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(chef) && string.IsNullOrEmpty(ingredientName))
-                return _recipeRepository.GetAll();
-            return _recipeRepository.GetBy(name, chef, ingredientName);
+                return _recipeRepository.GetAllAsync();
+            return _recipeRepository.GetByAsync(name, chef, ingredientName);
         }
 
         // GET: api/Recipes/5
@@ -39,9 +40,9 @@ namespace RecipeApi.Controllers
         /// <param name="id">the id of the recipe</param>
         /// <returns>The recipe</returns>
         [HttpGet("{id}")]
-        public ActionResult<Recipe> GetRecipe(int id)
+        public async Task<ActionResult<Recipe>> GetRecipe(int id)
         {
-            Recipe recipe = _recipeRepository.GetBy(id);
+            Recipe recipe = await _recipeRepository.GetByAsync(id);
             if (recipe == null) return NotFound();
             return recipe;
         }
@@ -52,13 +53,13 @@ namespace RecipeApi.Controllers
         /// </summary>
         /// <param name="recipe">the new recipe</param>
         [HttpPost]
-        public ActionResult<Recipe> PostRecipe(RecipeDTO recipe)
+        public async Task<ActionResult<Recipe>> PostRecipe(RecipeDTO recipe)
         {
             Recipe recipeToCreate = new Recipe() { Name = recipe.Name, Chef = recipe.Chef };
             foreach (var i in recipe.Ingredients)
                 recipeToCreate.AddIngredient(new Ingredient(i.Name, i.Amount, i.Unit));
             _recipeRepository.Add(recipeToCreate);
-            _recipeRepository.SaveChanges();
+            await _recipeRepository.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetRecipe), new { id = recipeToCreate.Id }, recipeToCreate);
         }
@@ -70,15 +71,15 @@ namespace RecipeApi.Controllers
         /// <param name="id">id of the recipe to be modified</param>
         /// <param name="recipe">the modified recipe</param>
         [HttpPut("{id}")]
-        public IActionResult PutRecipe(int id, Recipe recipe)
+        public async Task<ActionResult> PutRecipe(int id, Recipe recipe)
         {
             if (id != recipe.Id)
             {
                 return BadRequest();
             }
             _recipeRepository.Update(recipe);
-            _recipeRepository.SaveChanges();
-            return NoContent();
+            await _recipeRepository.SaveChangesAsync();
+            return NoContent(); // Consider returning ok.
         }
 
         // DELETE: api/Recipes/5
@@ -88,16 +89,16 @@ namespace RecipeApi.Controllers
         /// <param name="id">the id of the recipe to be deleted</param>
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteRecipe(int id)
+        public async Task<IActionResult> DeleteRecipe(int id)
         {
-            Recipe recipe = _recipeRepository.GetBy(id);
+            Recipe recipe = await _recipeRepository.GetByAsync(id);
             if (recipe == null)
             {
                 return NotFound();
             }
             _recipeRepository.Delete(recipe);
-            _recipeRepository.SaveChanges();
-            return NoContent();
+            await _recipeRepository.SaveChangesAsync();
+            return NoContent();  // Consider returning ok.
         }
 
         /// <summary>
@@ -106,9 +107,11 @@ namespace RecipeApi.Controllers
         /// <param name="id">id of the recipe</param>
         /// <param name="ingredientId">id of the ingredient</param>
         [HttpGet("{id}/ingredients/{ingredientId}")]
-        public ActionResult<Ingredient> GetIngredient(int id, int ingredientId)
+        public async Task<ActionResult<Ingredient>> GetIngredient(int id, int ingredientId)
         {
-            if (!_recipeRepository.TryGetRecipe(id, out var recipe))
+            var (isFound, recipe) = await _recipeRepository.TryGetRecipeAsync(id);
+
+            if (!isFound)
             {
                 return NotFound();
             }
@@ -124,15 +127,17 @@ namespace RecipeApi.Controllers
         /// <param name="id">the id of the recipe</param>
         /// <param name="ingredient">the ingredient to be added</param>
         [HttpPost("{id}/ingredients")]
-        public ActionResult<Ingredient> PostIngredient(int id, IngredientDTO ingredient)
+        public async Task<ActionResult<Ingredient>> PostIngredient(int id, IngredientDTO ingredient)
         {
-            if (!_recipeRepository.TryGetRecipe(id, out var recipe))
+            var (isFound, recipe) = await _recipeRepository.TryGetRecipeAsync(id);
+
+            if (!isFound)
             {
                 return NotFound();
             }
             var ingredientToCreate = new Ingredient(ingredient.Name, ingredient.Amount, ingredient.Unit);
             recipe.AddIngredient(ingredientToCreate);
-            _recipeRepository.SaveChanges();
+            await _recipeRepository.SaveChangesAsync();
             return CreatedAtAction("GetIngredient", new { id = recipe.Id, ingredientId = ingredientToCreate.Id }, ingredientToCreate);
         }
     }

@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace RecipeApi.Models
 {
     public interface IRecipeRepository
     {
-        Recipe GetBy(int id);
-        bool TryGetRecipe(int id, out Recipe recipe);
-        IEnumerable<Recipe> GetAll();
-        IEnumerable<Recipe> GetBy(string name = null, string chef = null, string ingredientName = null);
+        Task<Recipe> GetByAsync(int id);
+        Task<(bool, Recipe)> TryGetRecipeAsync(int id);
+        Task<IEnumerable<Recipe>> GetAllAsync();
+        Task<IEnumerable<Recipe>> GetByAsync(string name = null, string chef = null, string ingredientName = null);
         void Add(Recipe recipe);
         void Delete(Recipe recipe);
         void Update(Recipe recipe);
-        void SaveChanges();
+        Task SaveChangesAsync();
     }
 }
 
