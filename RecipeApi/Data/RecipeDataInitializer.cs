@@ -1,25 +1,39 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RecipeApi.Data
 {
-    public class RecipeDataInitializer
+    /// <summary>
+    /// Initializes the database Async. on startup.
+    /// </summary>
+    public class RecipeDataInitializer : IHostedService
     {
-        private readonly RecipeContext _dbContext;
-
-        public RecipeDataInitializer(RecipeContext dbContext)
+        private readonly IServiceProvider _serviceProvider;
+        public RecipeDataInitializer(IServiceProvider serviceProvider)
         {
-            _dbContext = dbContext;
+            _serviceProvider = serviceProvider;
         }
 
-        public void InitializeData()
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _dbContext.Database.EnsureDeleted();
-            if (_dbContext.Database.EnsureCreated())
+            // Create a new scope to retrieve scoped services
+            using (var scope = _serviceProvider.CreateScope())
             {
-                //seeding the database with recipes, see DBContext               
+                // Get the DbContext instance
+                var dbContext = scope.ServiceProvider.GetRequiredService<RecipeContext>();
+
+                //Do the initialization asynchronously
+                await dbContext.Database.EnsureDeletedAsync();
+                await dbContext.Database.EnsureCreatedAsync();
             }
         }
 
-             }
+        // noop
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
 }
 
