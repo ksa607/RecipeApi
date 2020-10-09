@@ -2,6 +2,7 @@
 using RecipeApi.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace RecipeApi.Data.Repositories
 {
@@ -16,20 +17,21 @@ namespace RecipeApi.Data.Repositories
             _recipes = dbContext.Recipes;
         }
 
-        public IEnumerable<Recipe> GetAll()
+        public async Task<IEnumerable<Recipe>> GetAllAsync()
         {
-            return _recipes.Include(r => r.Ingredients).ToList();
+            return await _recipes.Include(r => r.Ingredients).ToListAsync();
         }
 
-        public Recipe GetBy(int id)
+        public Task<Recipe> GetByAsync(int id)
         {
-            return _recipes.Include(r => r.Ingredients).SingleOrDefault(r => r.Id == id);
+            return _recipes.Include(r => r.Ingredients).SingleOrDefaultAsync(r => r.Id == id);
         }
 
-        public bool TryGetRecipe(int id, out Recipe recipe)
+        public async Task<(bool,Recipe)> TryGetRecipeAsync(int id)
         {
-            recipe = _context.Recipes.Include(t => t.Ingredients).FirstOrDefault(t => t.Id == id);
-            return recipe != null;
+            // Consider using a Guard Pattern instead of this function. (no out variables are possible in async functions).
+            var recipe = await _context.Recipes.Include(t => t.Ingredients).FirstOrDefaultAsync(t => t.Id == id);
+            return (recipe != null, recipe);
         }
 
         public void Add(Recipe recipe)
@@ -47,21 +49,18 @@ namespace RecipeApi.Data.Repositories
             _recipes.Remove(recipe);
         }
 
-        public void SaveChanges()
+        public Task SaveChangesAsync()
         {
-            _context.SaveChanges();
+            return _context.SaveChangesAsync();
         }
 
-        public IEnumerable<Recipe> GetBy(string name = null, string chef = null, string ingredientName = null)
+        public async Task<IEnumerable<Recipe>> GetByAsync(string name = null, string chef = null, string ingredientName = null)
         {
-            var recipes = _recipes.Include(r => r.Ingredients).AsQueryable();
-            if (!string.IsNullOrEmpty(name))
-                recipes = recipes.Where(r => r.Name.IndexOf(name) >= 0);
-            if (!string.IsNullOrEmpty(chef))
-                recipes = recipes.Where(r => r.Chef==chef);
-            if (!string.IsNullOrEmpty(ingredientName))
-                recipes = recipes.Where(r => r.Ingredients.Any(i => i.Name==ingredientName));
-            return recipes.OrderBy(r => r.Name).ToList();
+            return await _recipes.Include(r => r.Ingredients)
+                    .Where(r => r.Name.IndexOf(name) >= 0 || string.IsNullOrEmpty(name))
+                    .Where(r => r.Chef==chef || string.IsNullOrEmpty(chef))
+                    .Where(r => r.Ingredients.Any(i => i.Name==ingredientName) || string.IsNullOrEmpty(ingredientName))
+                    .OrderBy(r => r.Name).ToListAsync();
         }
     }
 }
